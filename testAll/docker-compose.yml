@@ -1,0 +1,88 @@
+version: '3.3'
+services:
+## Окружение
+  redis-uw:
+    restart: always
+    image: "redis"
+  redis-hub:
+    restart: always
+    image: "redis"
+  rabbit:
+    ports:
+      - 15672:15672
+#      - 5672:5672
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbit
+      - RABBITMQ_DEFAULT_PASS=rabbit
+      - RABBITMQ_DEFAULT_VHOST=/
+    restart: always
+    image: rabbitmq:3-management
+## Базы данных
+  postgres:
+    image: postgres
+    volumes:
+      - "../data/:/var/lib/postgresql/data"
+    ports:
+      - 25432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+## Сервер обновлений
+  update:
+    hostname: update-test
+    image: "happyfat/updateserver:${TAG}"
+    ports:
+      - 8080:8080
+    volumes:
+      - "./mnt/conf/update/:/etc/updateserver"
+      - "./mnt/log/update/:/var/log/update"
+    restart: always
+    env_file:
+      - ./env/update-test.env
+    links:
+      - postgres:postgres-update
+      - rabbit:rabbit
+## Хаб
+  hub:
+    image: "happyfat/dreamhub:${TAG}"
+    ports:
+      - 8787:8787
+      - 8081:8080
+    hostname: hub-test
+    volumes:
+      - "./mnt/conf/hub:/etc/dreamhub/hub"
+      - "./mnt/log/hub:/var/log/hub"
+    restart: always
+    env_file:
+      - ./env/hub-test.env
+    links:
+      - redis-hub:redis.ip
+      - postgres:postgres.ip
+      - rabbit:rabbitmq.ip
+## Воркеры
+  uw:
+    image: "happyfat/updateworker:${TAG}"
+    hostname: updateworker-test
+    volumes:
+      - "./mnt/conf/updateworker/:/etc/dreamhub/updateworker"
+      - "./mnt/log/updateworker/:/var/log/updateworker"
+    restart: always
+    links:
+      - redis-uw:redis.host
+      - postgres:postgres.host
+      - rabbit:rabbitmq.host
+    env_file:
+      - ./env/updateworker-test.env
+  tw:
+    image: "happyfat/tasksworker:${TAG}"
+    hostname: tasksworker-test
+    volumes:
+      - "./mnt/conf/tasksworker:/etc/dreamhub/tasksworker"
+      - "./mnt/log/tasksworker:/var/log/tasksworker"
+    restart: always
+    links:
+      - redis-hub:redis.host
+      - postgres:postgres.host
+      - rabbit:rabbitmq.host
+    env_file:
+      - ./env/tasksworker-test.env

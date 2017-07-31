@@ -1,0 +1,8 @@
+spring:
+  profiles: overwrite
+selectel:
+  password: 3rIP9NpX8p
+  userName: 36480_updateserver
+selectel.container: updates_test
+spring.jpa.hibernate.ddl-auto: create-drop
+rabbitmq.ip: ${RABBITMQ_IP}

@@ -1,0 +1,25 @@
+version: '3.3'
+services:
+  redis:
+    ports:
+      - 6379:6379
+    restart: always
+    image: "redis"
+  rabbit:
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=324012
+      - RABBITMQ_DEFAULT_VHOST=/
+    restart: always
+    image: rabbitmq:3-management
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    restart: always
+
